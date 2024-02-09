@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_DB: dev
+      POSTGRES_PASSWORD: dev
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U dev" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: postgres -c 'shared_buffers=256MB' -c 'max_connections=2000'
+    networks:
+      - backend
+
+  api:
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm install && npm run start"
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      PORT: 80
+      DATABASE_HOST: postgres-db
+      DATABASE_DB_NAME: dev
+      DATABASE_USER: dev
+      DATABASE_PASSWORD: dev
+      DATABASE_PORT: 5432
+      DATABASE_DRIVER: postgres
+      ACESS_TOKEN_SECRET: 6489a0781795d97338883b9d4708be53c4839996a88c1f84578f95fcdda20843
+      REFRESH_TOKEN_SECRET: 10b3c1d105a0fa06bb9598caab5093b107f4682f2642967c2f69cefe8d0dace1
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+
+
+networks:
+  backend:
