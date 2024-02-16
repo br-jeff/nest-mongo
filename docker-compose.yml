@@ -1,26 +1,36 @@
 version: '3.9'
 
 services:
-  db:
-    image: postgres
-    container_name: postgres-db
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: dev
-      POSTGRES_DB: dev
-      POSTGRES_PASSWORD: dev
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U dev" ]
-      interval: 30s
-      timeout: 30s
-      retries: 3
+  mongo:
+    container_name: "mongodb"
+    image: mongo
+    restart: always
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    command: postgres -c 'shared_buffers=256MB' -c 'max_connections=2000'
-    networks:
-      - backend
+      - ./.mongodb:/data/db
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongodb123
+      MONGO_INITDB_DATABASE: dbtest
 
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    depends_on:
+      - mongo
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: mongodb123
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_BASICAUTH_USERNAME: user
+      ME_CONFIG_BASICAUTH_PASSWORD: dev
+      ME_CONFIG_MONGODB_PORT: 27017
+    links:
+      - mongo
   api:
     working_dir: /app
     volumes:
@@ -30,23 +40,12 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      - mongo
+      - mongo-express
     environment:
-      PORT: 80
-      DATABASE_HOST: postgres-db
-      DATABASE_DB_NAME: dev
-      DATABASE_USER: dev
-      DATABASE_PASSWORD: dev
-      DATABASE_PORT: 5432
-      DATABASE_DRIVER: postgres
-      ACESS_TOKEN_SECRET: 6489a0781795d97338883b9d4708be53c4839996a88c1f84578f95fcdda20843
-      REFRESH_TOKEN_SECRET: 10b3c1d105a0fa06bb9598caab5093b107f4682f2642967c2f69cefe8d0dace1
+      PORT: 3000
     networks:
       - backend
-
-volumes:
-  pgdata:
-
 
 networks:
   backend:
