@@ -1,12 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import * as mongoose from 'mongoose';
 
-export type ProductDocument = HydratedDocument<Person>;
-
-@Schema()
-export class Person {
-  @Prop()
-  name: string;
-}
-
-export const PersonSchema = SchemaFactory.createForClass(Person);
+export const PersonSchema = new mongoose.Schema({
+  name: String,
+});
